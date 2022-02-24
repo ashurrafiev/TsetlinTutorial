@@ -1,6 +1,8 @@
 #ifndef _MULTI_CLASS_TSETLIN_MACHINE_H_
 #define _MULTI_CLASS_TSETLIN_MACHINE_H_
 
+#include <stdio.h>
+
 #include "TsetlinMachine.h"
 
 struct MultiClassTsetlinMachine {
@@ -17,6 +19,57 @@ MultiClassTsetlinMachine* createMultiClassTsetlinMachine() {
 	struct MultiClassTsetlinMachine *mctm = (MultiClassTsetlinMachine *)malloc(sizeof(struct MultiClassTsetlinMachine));
 	initialize(mctm);
 	return mctm;
+}
+
+void remapState(MultiClassTsetlinMachine* mctm) {
+	for(int i=0; i<CLASSES; i++)
+		for(int j=0; j<CLAUSES; j++)
+			for(int k=0; k<LITERALS; k++) {
+				int* ta = &mctm->tsetlinMachines[i].clauses[j].ta[k];
+				if(INCLUDE_LITERAL(*ta))
+					*ta = 1;
+				else
+					*ta = -NUM_STATES+1;
+			}
+}
+
+int loadState(MultiClassTsetlinMachine* mctm) {
+	int step = 0;
+	#ifdef LOAD_STATE
+	FILE* fp = fopen(LOAD_STATE, "rt");
+	if(fp == NULL) {
+		printf("Error reading %s\n", LOAD_STATE);
+		exit(EXIT_FAILURE);
+	}
+	fscanf(fp, "%d", &step);
+	for(int i=0; i<CLASSES; i++)
+		for(int j=0; j<CLAUSES; j++)
+			for(int k=0; k<LITERALS; k++)
+				fscanf(fp, "%d", &mctm->tsetlinMachines[i].clauses[j].ta[k]);
+	fclose(fp);
+	#endif
+	
+	#if REMAP_STATE
+	remapState(mctm);
+	#endif
+	return step;
+}
+
+void saveState(MultiClassTsetlinMachine* mctm, int step) {
+	#ifdef SAVE_STATE
+	FILE* fp = fopen(SAVE_STATE, "wt");
+	if(fp == NULL) {
+		printf("Error writing %s\n", SAVE_STATE);
+		exit(EXIT_FAILURE);
+	}
+	fprintf(fp, "%d", step);
+	for(int i=0; i<CLASSES; i++)
+		for(int j=0; j<CLAUSES; j++)
+			for(int k=0; k<LITERALS; k++)
+				fprintf(fp, "\t%d", mctm->tsetlinMachines[i].clauses[j].ta[k]);
+	fprintf(fp, "\n");
+	fclose(fp);
+	#endif
 }
 
 double evaluate(MultiClassTsetlinMachine* mctm, int inputs[][FEATURES], int labels[], int numberOfExamples) {

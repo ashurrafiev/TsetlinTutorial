@@ -22,16 +22,16 @@ int read_set(int X[][FEATURES], int y[], int num, const char* images, const char
 	unsigned char b;
 	
 	fp = fopen(images, "r");
-	if (fp == NULL) {
-		printf("Error opening %s\n", images);
+	if(fp == NULL) {
+		printf("Error reading %s\n", images);
 		exit(EXIT_FAILURE);
 	}
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
-	for (int i = 0; i < num; i++) {
-		for (int j = 0; j < FEATURES; j++) {
+	for(int i=0; i<num; i++) {
+		for(int j=0; j<FEATURES; j++) {
 			if(fread(&b, 1, 1, fp)!=1)
 				return 0;
 			X[i][j] = b > IMAGE_THRESHOLD ? 1 : 0;
@@ -40,13 +40,13 @@ int read_set(int X[][FEATURES], int y[], int num, const char* images, const char
 	fclose(fp);
 	
 	fp = fopen(labels, "r");
-	if (fp == NULL) {
-		printf("Error opening %s\n", labels);
+	if(fp == NULL) {
+		printf("Error reading %s\n", labels);
 		exit(EXIT_FAILURE);
 	}
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
-	for (int i = 0; i < num; i++) {
+	for(int i=0; i<num; i++) {
 		if(fread(&b, 1, 1, fp)!=1)
 			return 0;
 		y[i] = (int) b;
@@ -89,6 +89,7 @@ int main(int argc, char**argv)
 
 	struct MultiClassTsetlinMachine *mctm = createMultiClassTsetlinMachine();
 	initialize(mctm);
+	int step = loadState(mctm);
 
 	LogTAStates logStates;
 	startLogTAStates(&logStates);
@@ -98,14 +99,14 @@ int main(int argc, char**argv)
 	int epoch = 0;
 	int index = 0;
 	
-	for(int step=0; step<steps; step++) {
+	for(int s=0; s<steps; s++) {
 		printf("\nStep: %d (epoch %d)\n", step, epoch);
 		
-		if(ACC_EVAL_TRAIN>0 && (step+1)%ACC_EVAL_TRAIN==0) {
+		if(ACC_EVAL_TRAIN>0 && (s==0 || (s+1)%ACC_EVAL_TRAIN==0)) {
 			log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
 			printf("Train acc: %f\n", log.accTrain);
 		}
-		if(ACC_EVAL_TEST>0 && (step+1)%ACC_EVAL_TEST==0) {
+		if(ACC_EVAL_TEST>0 && (s==0 || (s+1)%ACC_EVAL_TEST==0)) {
 			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
 			printf("Test acc: %f\n", log.accTest);
 		}
@@ -126,6 +127,8 @@ int main(int argc, char**argv)
 		clock_t end_epoch = clock();
 		double time_used = ((double) (end_epoch - start_epoch)) / CLOCKS_PER_SEC;
 		printf("(step time: %f)\n", time_used);
+		
+		step++;
 	}
 	if(ACC_EVAL_TRAIN==0) {
 		log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
@@ -136,6 +139,8 @@ int main(int argc, char**argv)
 		printf("Final test acc: %f\n", log.accTest);
 	}
 	
+	saveState(mctm, step);
+
 	finishLogTAStates(&logStates);
 	finishLogStatus(&log);
 	return 0;

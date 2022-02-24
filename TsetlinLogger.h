@@ -16,19 +16,25 @@ struct LogTAStates {
 
 void startLogTAStates(LogTAStates* log) {
 	#if LOG_TASTATES
-	log->fp = fopen(TASTATES_PATH, "wt");
+	#if LOG_APPEND
+		log->fp = fopen(TASTATES_PATH, "at");
+	#else
+		log->fp = fopen(TASTATES_PATH, "wt");
+	#endif
 	if (log->fp == NULL) {
 		printf("Error writing %s\n", TASTATES_PATH);
 		exit(EXIT_FAILURE);
 	}
-	fprintf(log->fp, "t\t");
-	for(int i=0; i<CLASSES; i++) {
-		for(int s=MIN_STATE; s<=MAX_STATE; s++) {
-			fprintf(log->fp, "c%d%+d\t", i, s);
+	#if !LOG_APPEND
+		fprintf(log->fp, "t\t");
+		for(int i=0; i<CLASSES; i++) {
+			for(int s=MIN_STATE; s<=MAX_STATE; s++) {
+				fprintf(log->fp, "c%d%+d\t", i, s);
+			}
 		}
-	}
-	fprintf(log->fp, "\n");
-	fflush(log->fp);
+		fprintf(log->fp, "\n");
+		fflush(log->fp);
+	#endif
 	#endif
 }
 
@@ -70,24 +76,29 @@ struct LogStatus {
 
 void startLogStatus(LogStatus* log) {
 	#if LOG_STATUS
-	log->fp = fopen(STATUS_PATH, "wt");
+	#if LOG_APPEND
+		log->fp = fopen(STATUS_PATH, "at");
+	#else
+		log->fp = fopen(STATUS_PATH, "wt");
+	#endif
 	if (log->fp == NULL) {
 		printf("Error writing %s\n", STATUS_PATH);
 		exit(EXIT_FAILURE);
 	}
-	fprintf(log->fp, "t\t");
 	
-	fprintf(log->fp, "acctrain\t");
-	fprintf(log->fp, "acctest\t");
-	for(int i=0; i<CLASSES; i++) {
-		fprintf(log->fp, "inc%d\t", i);
-		fprintf(log->fp, "flips%d\t", i);
-		fprintf(log->fp, "type1-c%d\t", i);
-		fprintf(log->fp, "type2-c%d\t", i);
-	}
-	
-	fprintf(log->fp, "\n");
-	fflush(log->fp);
+	#if !LOG_APPEND
+		fprintf(log->fp, "t\t");
+		fprintf(log->fp, "acctrain\t");
+		fprintf(log->fp, "acctest\t");
+		for(int i=0; i<CLASSES; i++) {
+			fprintf(log->fp, "inc%d\t", i);
+			fprintf(log->fp, "flips%d\t", i);
+			fprintf(log->fp, "type1-c%d\t", i);
+			fprintf(log->fp, "type2-c%d\t", i);
+		}
+		fprintf(log->fp, "\n");
+		fflush(log->fp);
+	#endif
 	
 	log->accTrain = 0;
 	log->accTest = 0;
