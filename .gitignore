@@ -1,4 +1,5 @@
 mnist
+*.csv
 
 *.lyx~
 tmp/

@@ -19,6 +19,13 @@ struct Clause {
 
 struct TsetlinMachine { 
 	Clause clauses[CLAUSES];
+	
+	#if LOG_STATUS
+	int flips;
+	int countType1;
+	int countType2;
+	bool prevInc[CLAUSES][LITERALS];
+	#endif
 };
 
 /**
@@ -100,6 +107,11 @@ void initialize(TsetlinMachine* tm) {
 			}
 		}
 	}
+	#if LOG_STATUS
+	tm->flips = 0;
+	tm->countType1 = 0;
+	tm->countType2 = 0;
+	#endif
 }
 	
 TsetlinMachine* createTsetlinMachine() {
@@ -171,6 +183,13 @@ void typeIIFeedback(Clause* clause, int input[]) {
 }
 
 void update(TsetlinMachine* tm, int input[], int output) {
+	#if LOG_STATUS
+	for(int j=0; j<CLAUSES; j++)
+		for(int k=0; k<LITERALS; k++) {
+			tm->prevInc[j][k] = INCLUDE_LITERAL(tm->clauses[j].ta[k]);
+		}
+	#endif
+	
 	calculateClauseOutputs(tm, input, 0);
 	int classSum = calculateVoting(tm);
 	
@@ -186,20 +205,42 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		double feedbackProbability;
 		if(y) {
 			feedbackProbability = (L_THRESHOLD - classSum) / (2.0 * L_THRESHOLD);
-			if(WITH_PROBABILITY(feedbackProbability))
+			if(WITH_PROBABILITY(feedbackProbability)) {
+				tm->countType1++;
 				typeIFeedback(&tm->clauses[j], input);
+			}
 		}
 		else {
 			feedbackProbability = (L_THRESHOLD + classSum) / (2.0 * L_THRESHOLD);
-			if(WITH_PROBABILITY(feedbackProbability))
+			if(WITH_PROBABILITY(feedbackProbability)) {
+				tm->countType2++;
 				typeIIFeedback(&tm->clauses[j], input);
+			}
 		}
 	}
+	
+	#if LOG_STATUS
+	for(int j=0; j<CLAUSES; j++)
+		for(int k=0; k<LITERALS; k++) {
+			if(tm->prevInc[j][k] != INCLUDE_LITERAL(tm->clauses[j].ta[k]))
+				tm->flips++;
+		}
+	#endif
 }
 
 int score(TsetlinMachine* tm, int input[]) {
 	calculateClauseOutputs(tm, input, 1);
 	return calculateVoting(tm);
+}
+
+int countIncluded(TsetlinMachine* tm) {
+	int count = 0;
+	for(int j=0; j<CLAUSES; j++)
+		for(int k=0; k<LITERALS; k++) {
+			if(INCLUDE_LITERAL(tm->clauses[j].ta[k]))
+				count++;
+		}
+	return count;
 }
 
 #endif

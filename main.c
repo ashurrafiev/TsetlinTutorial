@@ -5,6 +5,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "TsetlinLogger.h"
+
 #define IMAGE_THRESHOLD 64
 
 int X_train[NUM_EXAMPLES_TRAIN][FEATURES];
@@ -13,7 +15,7 @@ int y_train[NUM_EXAMPLES_TRAIN];
 int X_test[NUM_EXAMPLES_TEST][FEATURES];
 int y_test[NUM_EXAMPLES_TEST];
 
-void read_set(int X[][FEATURES], int y[], int num, const char* images, const char* labels)
+int read_set(int X[][FEATURES], int y[], int num, const char* images, const char* labels)
 {
 	FILE * fp;
 	int skip;
@@ -30,7 +32,8 @@ void read_set(int X[][FEATURES], int y[], int num, const char* images, const cha
 	fread(&skip, 4, 1, fp);
 	for (int i = 0; i < num; i++) {
 		for (int j = 0; j < FEATURES; j++) {
-			fread(&b, 1, 1, fp);
+			if(fread(&b, 1, 1, fp)!=1)
+				return 0;
 			X[i][j] = b > IMAGE_THRESHOLD ? 1 : 0;
 		}
 	}
@@ -44,47 +47,96 @@ void read_set(int X[][FEATURES], int y[], int num, const char* images, const cha
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
 	for (int i = 0; i < num; i++) {
-		fread(&b, 1, 1, fp);
+		if(fread(&b, 1, 1, fp)!=1)
+			return 0;
 		y[i] = (int) b;
 	}
 	fclose(fp);
+	
+	return 1;
 }
 
-void read_data(void)
+int read_data(void)
 {
-	printf("Reading train data\n");
-	read_set(X_train, y_train, NUM_EXAMPLES_TRAIN, "../train-images.idx3-ubyte", "../train-labels.idx1-ubyte");
-	printf("Reading test data\n");
-	read_set(X_test, y_test, NUM_EXAMPLES_TEST, "../t10k-images.idx3-ubyte", "../t10k-labels.idx1-ubyte");
+	int res = 1;
+	res &= read_set(X_train, y_train, NUM_EXAMPLES_TRAIN, INPUT_DATA_PATH "/train-images.idx3-ubyte", INPUT_DATA_PATH "/train-labels.idx1-ubyte");
+	res &= read_set(X_test, y_test, NUM_EXAMPLES_TEST, INPUT_DATA_PATH "/t10k-images.idx3-ubyte", INPUT_DATA_PATH "/t10k-labels.idx1-ubyte");
+	return res;
 }
 
 
 int main(int argc, char**argv)
 {
-	int epochs = argc>1 ? atoi(argv[1]) : 10; // 30
+	int stepSize = argc>1 ? atoi(argv[1]) : 10;
+	int steps = argc>2 ? atoi(argv[2]) : 100;
 
-	srand(time(NULL));
-
-	read_data();
+	printf("CLAUSES = %d\n", CLAUSES);
+	printf("L_RATE = %f\n", L_RATE);
+	#if RAND_SEED
+		printf("Random seed: %u (fixed)\n", RAND_SEED);
+		srand(RAND_SEED);
+	#else
+		time_t seed = time(NULL);
+		printf("Random seed: %lu (time)\n", seed);
+		srand(seed);
+	#endif
+	printf("Reading data...");
+	
+	if(!read_data()) {
+		printf("Failed to read data\n");
+		return 1;
+	}
 
 	struct MultiClassTsetlinMachine *mctm = createMultiClassTsetlinMachine();
-
-	printf("Started training (%d epochs)...\n", epochs);
-	
 	initialize(mctm);
-	clock_t start_total = clock();
-	fit(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN, epochs);
-	clock_t end_total = clock();
-	double time_used = ((double) (end_total - start_total)) / CLOCKS_PER_SEC;
-	printf("Training finished in: %f s\n", time_used);
 
-	printf("Evaluating test...\n");
-	float acc = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
-	printf("Accuracy: %f\n", acc);
+	LogTAStates logStates;
+	startLogTAStates(&logStates);
+	LogStatus log;
+	startLogStatus(&log);
 	
-	printf("Evaluating train...\n");
-	acc = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
-	printf("Accuracy: %f\n", acc);
+	int epoch = 0;
+	int index = 0;
 	
+	for(int step=0; step<steps; step++) {
+		printf("\nStep: %d (epoch %d)\n", step, epoch);
+		
+		if(ACC_EVAL_TRAIN>0 && (step+1)%ACC_EVAL_TRAIN==0) {
+			log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
+			printf("Train acc: %f\n", log.accTrain);
+		}
+		if(ACC_EVAL_TEST>0 && (step+1)%ACC_EVAL_TEST==0) {
+			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
+			printf("Test acc: %f\n", log.accTest);
+		}
+		logTAStates(&logStates, step, mctm);
+		logStatus(&log, step, mctm);
+
+		clock_t start_epoch = clock();
+
+		for(int l=0; l<stepSize; l++) {
+			update(mctm, X_train[index], y_train[index]);
+			index++;
+			if(index>=NUM_EXAMPLES_TRAIN) {
+				index = 0;
+				epoch++;
+			}
+		}
+		
+		clock_t end_epoch = clock();
+		double time_used = ((double) (end_epoch - start_epoch)) / CLOCKS_PER_SEC;
+		printf("(step time: %f)\n", time_used);
+	}
+	if(ACC_EVAL_TRAIN==0) {
+		log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
+		printf("Final train acc: %f\n", log.accTrain);
+	}
+	if(ACC_EVAL_TEST==0) {
+		log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
+		printf("Final test acc: %f\n", log.accTest);
+	}
+	
+	finishLogTAStates(&logStates);
+	finishLogStatus(&log);
 	return 0;
 }
