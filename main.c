@@ -72,6 +72,7 @@ int main(int argc, char**argv)
 
 	printf("CLAUSES = %d\n", CLAUSES);
 	printf("L_RATE = %f\n", L_RATE);
+	printf("L_NORM_THRESHOLD = %f\n", L_NORM_THRESHOLD);
 	#if RAND_SEED
 		printf("Random seed: %u (fixed)\n", RAND_SEED);
 		srand(RAND_SEED);
@@ -80,7 +81,7 @@ int main(int argc, char**argv)
 		printf("Random seed: %lu (time)\n", seed);
 		srand(seed);
 	#endif
-	printf("Reading data...");
+	printf("Reading data...\n");
 	
 	if(!read_data()) {
 		printf("Failed to read data\n");
@@ -96,23 +97,21 @@ int main(int argc, char**argv)
 	LogStatus log;
 	startLogStatus(&log);
 	
+	if(step==0) {
+		if(ACC_EVAL_TRAIN>0)
+			log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
+		if(ACC_EVAL_TEST>0)
+			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
+		logTAStates(&logStates, step, mctm);
+		logStatus(&log, step, mctm);
+	}
+	
 	int epoch = 0;
 	int index = 0;
 	
 	for(int s=0; s<steps; s++) {
-		printf("\nStep: %d (epoch %d)\n", step, epoch);
-		
-		if(ACC_EVAL_TRAIN>0 && (s==0 || (s+1)%ACC_EVAL_TRAIN==0)) {
-			log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
-			printf("Train acc: %f\n", log.accTrain);
-		}
-		if(ACC_EVAL_TEST>0 && (s==0 || (s+1)%ACC_EVAL_TEST==0)) {
-			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
-			printf("Test acc: %f\n", log.accTest);
-		}
-		logTAStates(&logStates, step, mctm);
-		logStatus(&log, step, mctm);
-
+		printf("Step: %d (epoch %d) ... ", step, epoch);
+		fflush(stdout);
 		clock_t start_epoch = clock();
 
 		for(int l=0; l<stepSize; l++) {
@@ -126,15 +125,26 @@ int main(int argc, char**argv)
 		
 		clock_t end_epoch = clock();
 		double time_used = ((double) (end_epoch - start_epoch)) / CLOCKS_PER_SEC;
-		printf("(step time: %f)\n", time_used);
-		
+		printf("step time: %f\n", time_used);
+
 		step++;
+		
+		if(ACC_EVAL_TRAIN>0 && step%ACC_EVAL_TRAIN==0) {
+			log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
+			printf("\tTrain acc: %f\n", log.accTrain);
+		}
+		if(ACC_EVAL_TEST>0 && step%ACC_EVAL_TEST==0) {
+			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
+			printf("\tTest acc: %f\n", log.accTest);
+		}
+		logTAStates(&logStates, step, mctm);
+		logStatus(&log, step, mctm);
 	}
-	if(ACC_EVAL_TRAIN==0) {
+	if(ACC_EVAL_TRAIN==-1) {
 		log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);
 		printf("Final train acc: %f\n", log.accTrain);
 	}
-	if(ACC_EVAL_TEST==0) {
+	if(ACC_EVAL_TEST==-1) {
 		log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
 		printf("Final test acc: %f\n", log.accTest);
 	}

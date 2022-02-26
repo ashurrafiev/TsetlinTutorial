@@ -143,12 +143,7 @@ int calculateVoting(TsetlinMachine* tm) {
 			sum += VOTE(j);
 		}
 	}
-	if(sum<-L_THRESHOLD)
-		return -L_THRESHOLD;
-	else if(sum>L_THRESHOLD)
-		return L_THRESHOLD;
-	else
-		return sum;
+	return sum;
 }
 
 void typeIFeedbackLiteral(int k, Clause* clause, int literalValue) {
@@ -206,14 +201,18 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		if(y) {
 			feedbackProbability = (L_THRESHOLD - classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
-				tm->countType1++;
+				#if LOG_STATUS
+					tm->countType1++;
+				#endif
 				typeIFeedback(&tm->clauses[j], input);
 			}
 		}
 		else {
 			feedbackProbability = (L_THRESHOLD + classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
-				tm->countType2++;
+				#if LOG_STATUS
+					tm->countType2++;
+				#endif
 				typeIIFeedback(&tm->clauses[j], input);
 			}
 		}
