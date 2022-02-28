@@ -20,7 +20,7 @@ struct Clause {
 struct TsetlinMachine { 
 	Clause clauses[CLAUSES];
 	
-	#if LOG_STATUS
+	#if LOG_ENABLED
 	int flips;
 	int countType1;
 	int countType2;
@@ -178,7 +178,7 @@ void typeIIFeedback(Clause* clause, int input[]) {
 }
 
 void update(TsetlinMachine* tm, int input[], int output) {
-	#if LOG_STATUS
+	#if LOG_ENABLED
 	for(int j=0; j<CLAUSES; j++)
 		for(int k=0; k<LITERALS; k++) {
 			tm->prevInc[j][k] = INCLUDE_LITERAL(tm->clauses[j].ta[k]);
@@ -201,7 +201,7 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		if(y) {
 			feedbackProbability = (L_THRESHOLD - classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
-				#if LOG_STATUS
+				#if LOG_ENABLED
 					tm->countType1++;
 				#endif
 				typeIFeedback(&tm->clauses[j], input);
@@ -210,7 +210,7 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		else {
 			feedbackProbability = (L_THRESHOLD + classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
-				#if LOG_STATUS
+				#if LOG_ENABLED
 					tm->countType2++;
 				#endif
 				typeIIFeedback(&tm->clauses[j], input);
@@ -218,7 +218,7 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		}
 	}
 	
-	#if LOG_STATUS
+	#if LOG_ENABLED
 	for(int j=0; j<CLAUSES; j++)
 		for(int k=0; k<LITERALS; k++) {
 			if(tm->prevInc[j][k] != INCLUDE_LITERAL(tm->clauses[j].ta[k]))

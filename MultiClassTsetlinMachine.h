@@ -35,41 +35,40 @@ void remapState(MultiClassTsetlinMachine* mctm) {
 
 int loadState(MultiClassTsetlinMachine* mctm) {
 	int step = 0;
-	#ifdef LOAD_STATE
-	FILE* fp = fopen(LOAD_STATE, "rt");
-	if(fp == NULL) {
-		printf("Error reading %s\n", LOAD_STATE);
-		exit(EXIT_FAILURE);
+	if(LOAD_STATE) {
+		FILE* fp = fopen(LOAD_STATE_PATH, "rt");
+		if(fp == NULL) {
+			printf("Error reading %s\n", LOAD_STATE_PATH);
+			exit(EXIT_FAILURE);
+		}
+		fscanf(fp, "%d", &step);
+		for(int i=0; i<CLASSES; i++)
+			for(int j=0; j<CLAUSES; j++)
+				for(int k=0; k<LITERALS; k++)
+					fscanf(fp, "%d", &mctm->tsetlinMachines[i].clauses[j].ta[k]);
+		fclose(fp);
 	}
-	fscanf(fp, "%d", &step);
-	for(int i=0; i<CLASSES; i++)
-		for(int j=0; j<CLAUSES; j++)
-			for(int k=0; k<LITERALS; k++)
-				fscanf(fp, "%d", &mctm->tsetlinMachines[i].clauses[j].ta[k]);
-	fclose(fp);
-	#endif
-	
-	#if REMAP_STATE
-	remapState(mctm);
-	#endif
+
+	if(REMAP_STATE)
+		remapState(mctm);
 	return step;
 }
 
 void saveState(MultiClassTsetlinMachine* mctm, int step) {
-	#ifdef SAVE_STATE
-	FILE* fp = fopen(SAVE_STATE, "wt");
-	if(fp == NULL) {
-		printf("Error writing %s\n", SAVE_STATE);
-		exit(EXIT_FAILURE);
+	if(SAVE_STATE) {
+		FILE* fp = fopen(SAVE_STATE_PATH, "wt");
+		if(fp == NULL) {
+			printf("Error writing %s\n", SAVE_STATE_PATH);
+			exit(EXIT_FAILURE);
+		}
+		fprintf(fp, "%d", step);
+		for(int i=0; i<CLASSES; i++)
+			for(int j=0; j<CLAUSES; j++)
+				for(int k=0; k<LITERALS; k++)
+					fprintf(fp, "\t%d", mctm->tsetlinMachines[i].clauses[j].ta[k]);
+		fprintf(fp, "\n");
+		fclose(fp);
 	}
-	fprintf(fp, "%d", step);
-	for(int i=0; i<CLASSES; i++)
-		for(int j=0; j<CLAUSES; j++)
-			for(int k=0; k<LITERALS; k++)
-				fprintf(fp, "\t%d", mctm->tsetlinMachines[i].clauses[j].ta[k]);
-	fprintf(fp, "\n");
-	fclose(fp);
-	#endif
 }
 
 double evaluate(MultiClassTsetlinMachine* mctm, int inputs[][FEATURES], int labels[], int numberOfExamples) {

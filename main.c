@@ -5,7 +5,11 @@
 #include <time.h>
 #include <string.h>
 
-#include "TsetlinLogger.h"
+#if LOG_ENABLED
+	#include "TsetlinLogger.h"
+#endif
+
+#include "ParseParams.h"
 
 #define IMAGE_THRESHOLD 64
 
@@ -64,23 +68,46 @@ int read_data(void)
 	return res;
 }
 
-
 int main(int argc, char**argv)
 {
-	int stepSize = argc>1 ? atoi(argv[1]) : 10;
-	int steps = argc>2 ? atoi(argv[2]) : 100;
+	int stepSize = 10;
+	int steps = 100;
+
+	ParseParamDefs params;
+	startParamDefs(&params);
+	addIntParam(&params, "-step-size", &stepSize, 0);
+	addIntParam(&params, "-steps", &steps, 0);
+	addDoubleParam(&params, "-s", &L_RATE, "learning rate s");
+	addDoubleParam(&params, "-t", &L_NORM_THRESHOLD, "threshold T (normalised)");
+	addIntParam(&params, "-rand-seed", &RAND_SEED, 0);
+	addIntParam(&params, "-acc-eval-train", &ACC_EVAL_TRAIN, 0);
+	addIntParam(&params, "-acc-eval-test", &ACC_EVAL_TEST, 0);
+	#if LOG_ENABLED
+		addFlagParam(&params, "-log-tastates", &LOG_TASTATES, 0);
+		addFlagParam(&params, "-log-status", &LOG_STATUS, 0);
+		addFlagParam(&params, "-log-append", &LOG_APPEND, 0);
+		addFlagParam(&params, "-load-state", &LOAD_STATE, 0);
+		addStrParam(&params, "-load-state-path", LOAD_STATE_PATH, 1024, 0);
+		addFlagParam(&params, "-remap-state", &REMAP_STATE, 0);
+		addFlagParam(&params, "-save-state", &SAVE_STATE, 0);
+		addStrParam(&params, "-save-state-path", SAVE_STATE_PATH, 1024, 0);
+	#endif
+	if(!parseParams(&params, argc, argv)) {
+		exit(EXIT_FAILURE);
+	}
 
 	printf("CLAUSES = %d\n", CLAUSES);
 	printf("L_RATE = %f\n", L_RATE);
 	printf("L_NORM_THRESHOLD = %f\n", L_NORM_THRESHOLD);
-	#if RAND_SEED
+	if(RAND_SEED) {
 		printf("Random seed: %u (fixed)\n", RAND_SEED);
 		srand(RAND_SEED);
-	#else
+	}
+	else {
 		time_t seed = time(NULL);
 		printf("Random seed: %lu (time)\n", seed);
 		srand(seed);
-	#endif
+	}
 	printf("Reading data...\n");
 	
 	if(!read_data()) {

@@ -1,4 +1,4 @@
-HDR = MultiClassTsetlinMachine.h TsetlinMachine.h TsetlinOptions.h
+HDR = MultiClassTsetlinMachine.h TsetlinMachine.h TsetlinOptions.h TsetlinLogger.h ParseParams.h
 .PHONY: default all clean
 
 all: mnist
