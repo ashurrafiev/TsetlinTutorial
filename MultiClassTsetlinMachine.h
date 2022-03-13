@@ -71,29 +71,44 @@ void saveState(MultiClassTsetlinMachine* mctm, int step) {
 	}
 }
 
-double evaluate(MultiClassTsetlinMachine* mctm, int inputs[][FEATURES], int labels[], int numberOfExamples) {
-	int maxClass;
-	int maxClassSum;
-
-	int errors = 0;
-	for(int l=0; l<numberOfExamples; l++) {
-		maxClassSum = score(&mctm->tsetlinMachines[0], inputs[l]);
-		maxClass = 0;
-		for(int i=1; i<CLASSES; i++) {	
-			int classSum = score(&mctm->tsetlinMachines[i], inputs[l]);
-			if(maxClassSum < classSum) {
-				maxClassSum = classSum;
-				maxClass = i;
-			}
-		}
-
-		if(maxClass!=labels[l]) {
-			errors += 1;
+int inferClass(MultiClassTsetlinMachine* mctm, int input[FEATURES]) {
+	int maxClassSum = score(&mctm->tsetlinMachines[0], input);
+	int maxClass = 0;
+	for(int i=1; i<CLASSES; i++) {	
+		int classSum = score(&mctm->tsetlinMachines[i], input);
+		if(maxClassSum < classSum) {
+			maxClassSum = classSum;
+			maxClass = i;
 		}
 	}
-	
+	return maxClass;
+}
+
+double evaluate(MultiClassTsetlinMachine* mctm, int inputs[][FEATURES], int labels[], int numberOfExamples) {
+	int errors = 0;
+	for(int l=0; l<numberOfExamples; l++) {
+		if(inferClass(mctm, inputs[l])!=labels[l])
+			errors++;
+	}
 	return 1.0 - errors / (double)numberOfExamples;
 }
+
+double evaluateClass(MultiClassTsetlinMachine* mctm, int inputs[][FEATURES], int labels[], int numberOfExamples, int cls) {
+	int errors = 0;
+	int count = 0;
+	for(int l=0; l<numberOfExamples; l++) {
+		if(cls==labels[l]) {
+			count++;
+			if(inferClass(mctm, inputs[l])!=cls)
+				errors++;
+		}
+	}
+	if(count==0)
+		return 0.0;
+	else
+		return 1.0 - errors / (double)count;
+}
+
 
 void update(MultiClassTsetlinMachine* mctm, int input[], int output) {
 	update(&mctm->tsetlinMachines[output], input, 1);

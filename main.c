@@ -99,6 +99,7 @@ int main(int argc, char**argv)
 	printf("CLAUSES = %d\n", CLAUSES);
 	printf("L_RATE = %f\n", L_RATE);
 	printf("L_NORM_THRESHOLD = %f\n", L_NORM_THRESHOLD);
+	printf("L_THRESHOLD = %d\n", L_THRESHOLD);
 	if(RAND_SEED) {
 		printf("Random seed: %u (fixed)\n", RAND_SEED);
 		srand(RAND_SEED);
@@ -130,7 +131,7 @@ int main(int argc, char**argv)
 		if(ACC_EVAL_TEST>0)
 			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
 		logTAStates(&logStates, step, mctm);
-		logStatus(&log, step, mctm);
+		logStatus(&log, step, stepSize, mctm);
 	}
 	
 	int epoch = 0;
@@ -165,7 +166,7 @@ int main(int argc, char**argv)
 			printf("\tTest acc: %f\n", log.accTest);
 		}
 		logTAStates(&logStates, step, mctm);
-		logStatus(&log, step, mctm);
+		logStatus(&log, step, stepSize, mctm);
 	}
 	if(ACC_EVAL_TRAIN==-1) {
 		log.accTrain = evaluate(mctm, X_train, y_train, NUM_EXAMPLES_TRAIN);

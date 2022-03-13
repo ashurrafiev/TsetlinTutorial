@@ -93,6 +93,7 @@ void startLogStatus(LogStatus* log) {
 			fprintf(log->fp, "flips%d\t", i);
 			fprintf(log->fp, "type1-c%d\t", i);
 			fprintf(log->fp, "type2-c%d\t", i);
+			fprintf(log->fp, "vote%d\t", i);
 		}
 		fprintf(log->fp, "\n");
 		fflush(log->fp);
@@ -102,7 +103,7 @@ void startLogStatus(LogStatus* log) {
 	log->accTest = 0;
 }
 
-void logStatus(LogStatus* log, int step, MultiClassTsetlinMachine* mctm) {
+void logStatus(LogStatus* log, int step, int stepSize, MultiClassTsetlinMachine* mctm) {
 	if(!LOG_STATUS)
 		return;
 		
@@ -113,12 +114,14 @@ void logStatus(LogStatus* log, int step, MultiClassTsetlinMachine* mctm) {
 	for(int i=0; i<CLASSES; i++) {
 		TsetlinMachine* tm = &mctm->tsetlinMachines[i];
 		fprintf(log->fp, "%d\t", countIncluded(tm));
-		fprintf(log->fp, "%d\t", tm->flips);
+		fprintf(log->fp, "%.3f\t", tm->flips/(double)stepSize);
 		tm->flips = 0;
 		fprintf(log->fp, "%d\t", tm->countType1+1);
 		tm->countType1 = 0;
 		fprintf(log->fp, "%d\t", tm->countType2+1);
 		tm->countType2 = 0;
+		fprintf(log->fp, "%.3f\t", tm->voteSum/(double)stepSize);
+		tm->voteSum = 0;
 	}
 	
 	fprintf(log->fp, "\n");

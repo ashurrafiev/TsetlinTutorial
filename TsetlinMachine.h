@@ -24,6 +24,7 @@ struct TsetlinMachine {
 	int flips;
 	int countType1;
 	int countType2;
+	int voteSum;
 	bool prevInc[CLAUSES][LITERALS];
 	#endif
 };
@@ -111,6 +112,7 @@ void initialize(TsetlinMachine* tm) {
 	tm->flips = 0;
 	tm->countType1 = 0;
 	tm->countType2 = 0;
+	tm->voteSum = 0;
 	#endif
 }
 	
@@ -187,6 +189,10 @@ void update(TsetlinMachine* tm, int input[], int output) {
 	
 	calculateClauseOutputs(tm, input, 0);
 	int classSum = calculateVoting(tm);
+
+	#if LOG_ENABLED
+		tm->voteSum += abs(classSum);
+	#endif
 	
 	for(int j=0; j<CLAUSES; j++) {
 		// inverse the decision for negatively-voting clauses
