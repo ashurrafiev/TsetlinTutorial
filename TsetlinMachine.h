@@ -96,7 +96,7 @@ void penalty(Clause* clause, int k) {
 
 void initialize(TsetlinMachine* tm) {
 	for(int j=0; j<CLAUSES; j++) {				
-		// set initial TA states to random noise
+		// set initial TA states to borderline exclude
 		for(int k=0; k<LITERALS; k+=2) {
 			if(WITH_PROBABILITY(0.5)) {
 				tm->clauses[j].ta[k] = 1;
@@ -106,6 +106,8 @@ void initialize(TsetlinMachine* tm) {
 				tm->clauses[j].ta[k] = 0;
 				tm->clauses[j].ta[k+1] = 1;
 			}
+			// tm->clauses[j].ta[k] = 0;
+			// tm->clauses[j].ta[k+1] = 0;
 		}
 	}
 	#if LOG_STATUS
@@ -205,7 +207,7 @@ void update(TsetlinMachine* tm, int input[], int output) {
 		// calculate feedback probability
 		double feedbackProbability;
 		if(y) {
-			feedbackProbability = (L_THRESHOLD - classSum) / (2.0 * L_THRESHOLD);
+			feedbackProbability = (L_THRESHOLD - (double)classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
 				#if LOG_ENABLED
 					tm->countType1++;
@@ -214,7 +216,7 @@ void update(TsetlinMachine* tm, int input[], int output) {
 			}
 		}
 		else {
-			feedbackProbability = (L_THRESHOLD + classSum) / (2.0 * L_THRESHOLD);
+			feedbackProbability = (L_THRESHOLD + (double)classSum) / (2.0 * L_THRESHOLD);
 			if(WITH_PROBABILITY(feedbackProbability)) {
 				#if LOG_ENABLED
 					tm->countType2++;

@@ -6,7 +6,7 @@
 
 double L_RATE = 5.0;
 double L_NORM_THRESHOLD = 0.35;
-#define L_THRESHOLD ((int)(L_NORM_THRESHOLD*CLAUSES/2))
+#define L_THRESHOLD (L_NORM_THRESHOLD*CLAUSES/2.0)
 
 #define FEATURES (28*28)
 #define CLASSES 10
@@ -17,7 +17,8 @@ double L_NORM_THRESHOLD = 0.35;
 
 int RAND_SEED = 0;
 int ACC_EVAL_TRAIN = 0;
-int ACC_EVAL_TEST = -1;
+int ACC_EVAL_TEST = 0;
+int ACC_EVAL_CLASSES = 0;
 
 #define LOG_ENABLED 1
 

@@ -72,6 +72,7 @@ void finishLogTAStates(LogTAStates* log) {
 struct LogStatus {
 	FILE* fp;
 	float accTrain, accTest;
+	float acc[CLASSES];
 };
 
 void startLogStatus(LogStatus* log) {
@@ -89,6 +90,7 @@ void startLogStatus(LogStatus* log) {
 		fprintf(log->fp, "acctrain\t");
 		fprintf(log->fp, "acctest\t");
 		for(int i=0; i<CLASSES; i++) {
+			fprintf(log->fp, "acc%d\t", i);
 			fprintf(log->fp, "inc%d\t", i);
 			fprintf(log->fp, "flips%d\t", i);
 			fprintf(log->fp, "type1-c%d\t", i);
@@ -101,6 +103,9 @@ void startLogStatus(LogStatus* log) {
 	
 	log->accTrain = 0;
 	log->accTest = 0;
+	for(int i=0; i<CLASSES; i++) {
+		log->acc[i] = 0;
+	}
 }
 
 void logStatus(LogStatus* log, int step, int stepSize, MultiClassTsetlinMachine* mctm) {
@@ -112,6 +117,8 @@ void logStatus(LogStatus* log, int step, int stepSize, MultiClassTsetlinMachine*
 	fprintf(log->fp, "%.3f\t", log->accTrain);
 	fprintf(log->fp, "%.3f\t", log->accTest);
 	for(int i=0; i<CLASSES; i++) {
+		fprintf(log->fp, "%.3f\t", log->acc[i]);
+		
 		TsetlinMachine* tm = &mctm->tsetlinMachines[i];
 		fprintf(log->fp, "%d\t", countIncluded(tm));
 		fprintf(log->fp, "%.3f\t", tm->flips/(double)stepSize);

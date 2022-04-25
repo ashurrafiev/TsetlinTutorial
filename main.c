@@ -23,7 +23,8 @@ int read_set(int X[][FEATURES], int y[], int num, const char* images, const char
 {
 	FILE * fp;
 	int skip;
-	unsigned char b;
+	size_t size = num*FEATURES;
+	unsigned char* buf = (unsigned char*) malloc(size);
 	
 	fp = fopen(images, "r");
 	if(fp == NULL) {
@@ -34,11 +35,13 @@ int read_set(int X[][FEATURES], int y[], int num, const char* images, const char
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
+	if(fread(buf, 1, size, fp)!=size)
+		return 0;
+	int offs = 0;
 	for(int i=0; i<num; i++) {
 		for(int j=0; j<FEATURES; j++) {
-			if(fread(&b, 1, 1, fp)!=1)
-				return 0;
-			X[i][j] = b > IMAGE_THRESHOLD ? 1 : 0;
+			X[i][j] = buf[offs] > IMAGE_THRESHOLD ? 1 : 0;
+			offs++;
 		}
 	}
 	fclose(fp);
@@ -50,13 +53,16 @@ int read_set(int X[][FEATURES], int y[], int num, const char* images, const char
 	}
 	fread(&skip, 4, 1, fp);
 	fread(&skip, 4, 1, fp);
+	if(fread(buf, 1, num, fp)!=(size_t)num)
+		return 0;
+	offs = 0;
 	for(int i=0; i<num; i++) {
-		if(fread(&b, 1, 1, fp)!=1)
-			return 0;
-		y[i] = (int) b;
+		y[i] = (int) buf[offs];
+		offs++;
 	}
 	fclose(fp);
 	
+	free(buf);
 	return 1;
 }
 
@@ -82,6 +88,7 @@ int main(int argc, char**argv)
 	addIntParam(&params, "-rand-seed", &RAND_SEED, 0);
 	addIntParam(&params, "-acc-eval-train", &ACC_EVAL_TRAIN, 0);
 	addIntParam(&params, "-acc-eval-test", &ACC_EVAL_TEST, 0);
+	addIntParam(&params, "-acc-eval-classes", &ACC_EVAL_CLASSES, 0);
 	#if LOG_ENABLED
 		addFlagParam(&params, "-log-tastates", &LOG_TASTATES, 0);
 		addFlagParam(&params, "-log-status", &LOG_STATUS, 0);
@@ -99,7 +106,7 @@ int main(int argc, char**argv)
 	printf("CLAUSES = %d\n", CLAUSES);
 	printf("L_RATE = %f\n", L_RATE);
 	printf("L_NORM_THRESHOLD = %f\n", L_NORM_THRESHOLD);
-	printf("L_THRESHOLD = %d\n", L_THRESHOLD);
+	printf("L_THRESHOLD = %f\n", L_THRESHOLD);
 	if(RAND_SEED) {
 		printf("Random seed: %u (fixed)\n", RAND_SEED);
 		srand(RAND_SEED);
@@ -164,6 +171,12 @@ int main(int argc, char**argv)
 		if(ACC_EVAL_TEST>0 && step%ACC_EVAL_TEST==0) {
 			log.accTest = evaluate(mctm, X_test, y_test, NUM_EXAMPLES_TEST);
 			printf("\tTest acc: %f\n", log.accTest);
+		}
+		if(ACC_EVAL_CLASSES>0 && step%ACC_EVAL_CLASSES==0) {
+			for(int i=0; i<CLASSES; i++) {
+				log.acc[i] = evaluateClass(mctm, X_test, y_test, NUM_EXAMPLES_TEST, i);
+				printf("\tClass[%d] test acc: %f\n", i, log.acc[i]);
+			}
 		}
 		logTAStates(&logStates, step, mctm);
 		logStatus(&log, step, stepSize, mctm);
