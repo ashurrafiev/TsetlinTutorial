@@ -10,4 +10,4 @@
 #./mnist -step-size 10000 -steps 6 -acc-eval-test 1 -load-state -load-state-path state4.csv -save-state -save-state-path state5.csv
 #./mnist -step-size 10000 -steps 30 -acc-eval-test 1 -load-state -load-state-path state5.csv -save-state -save-state-path state10.csv
 #./mnist -step-size 10000 -steps 30 -acc-eval-test 1 -load-state -load-state-path state10.csv -save-state -save-state-path state15.csv
-./mnist -step-size 1000 -steps 1 -acc-eval-classes 1
+./mnist -step-size 60000 -steps 5 -acc-eval-test 1
