@@ -198,11 +198,9 @@ void update(TsetlinMachine* tm, int input[], int output) {
 	
 	// calculate feedback probability
 	double feedbackProbability;
-	#if FIX_FEEDBACK_PROB
-		feedbackProbability = (L_THRESHOLD - (double)classSum) / (2.0 * L_THRESHOLD);
-		if(!output)
-			feedbackProbability = 1.0 - feedbackProbability;
-	#endif
+	feedbackProbability = (L_THRESHOLD - (double)classSum) / (2.0 * L_THRESHOLD);
+	if(!output)
+		feedbackProbability = 1.0 - feedbackProbability;
 	
 	for(int j=0; j<CLAUSES; j++) {
 		// inverse the decision for negatively-voting clauses
@@ -213,9 +211,6 @@ void update(TsetlinMachine* tm, int input[], int output) {
 			y = !output;
 
 		if(y) {
-			#if !FIX_FEEDBACK_PROB
-				feedbackProbability = (L_THRESHOLD - (double)classSum) / (2.0 * L_THRESHOLD);
-			#endif
 			if(WITH_PROBABILITY(feedbackProbability)) {
 				#if LOG_ENABLED
 					tm->countType1++;
@@ -224,9 +219,6 @@ void update(TsetlinMachine* tm, int input[], int output) {
 			}
 		}
 		else {
-			#if !FIX_FEEDBACK_PROB
-				feedbackProbability = (L_THRESHOLD + (double)classSum) / (2.0 * L_THRESHOLD);
-			#endif
 			if(WITH_PROBABILITY(feedbackProbability)) {
 				#if LOG_ENABLED
 					tm->countType2++;

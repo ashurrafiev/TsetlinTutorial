@@ -7,7 +7,6 @@
 double L_RATE = 5.0;
 double L_NORM_THRESHOLD = 0.35;
 #define L_THRESHOLD (L_NORM_THRESHOLD*CLAUSES/2.0)
-#define FIX_FEEDBACK_PROB 1
 
 #define FEATURES (28*28)
 #define CLASSES 10
