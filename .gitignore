@@ -3,6 +3,7 @@ mnist
 
 *.lyx~
 tmp/
+bak/
 
 # Just in case, OS files
 

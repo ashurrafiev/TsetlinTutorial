@@ -188,8 +188,58 @@ v=\sum_{j=0}^{n-1}C_{j}\left(X\right)\cdot\mathrm{sgn}\left(C_{j}\right).
 \end_layout
 
 \begin_layout Itemize
-Type I and Type II feedbacks have different probabilities, which are calculated
- based on the class confidence 
+Yellow diamonds represent probabilistic choices, such that a uniformly distribut
+ed random variable 
+\begin_inset Formula $\mathcal{U}_{\left[0,1\right)}$
+\end_inset
+
+, denoted as 
+\begin_inset Quotes eld
+\end_inset
+
+rand
+\begin_inset Quotes erd
+\end_inset
+
+, is less than the given probability 
+\begin_inset Formula $P$
+\end_inset
+
+, displayed in the diamond.
+ Therefore, the 
+\begin_inset Quotes eld
+\end_inset
+
+yes
+\begin_inset Quotes erd
+\end_inset
+
+ branch is triggered with an indicated probability 
+\begin_inset Formula $P$
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+no
+\begin_inset Quotes erd
+\end_inset
+
+ is triggered with the probability 
+\begin_inset Formula $\left(1-P\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+The clause feedback probability is calculated once for the entire clause
+ 
+\begin_inset Formula $C_{j}$
+\end_inset
+
+ and is based on the class confidence 
 \begin_inset Formula $v$
 \end_inset
 
@@ -300,7 +350,8 @@ The state of a single Tsetlin automaton
 \end_layout
 
 \begin_layout Itemize
-The probability of issuing a feedback action depends on the 
+The probability of issuing a per-literal feedback action depends on the
+ 
 \emph on
 learning rate
 \emph default
